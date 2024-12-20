@@ -9,6 +9,8 @@ import (
 	"crypto/md5"
 	"crypto/rc4"
 	"crypto/tls"
+	"crypto/rand"
+	"crypto/rsa"
 	"database/sql"
 	"fmt"
 	"io"
@@ -151,6 +153,12 @@ func main() {
 		gzr, _ := gzip.NewReader(r.Body)
 		_, _ = io.Copy(os.Stdout, gzr)
 	})
+	//added now
+	pvk, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(pvk)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -161,4 +169,38 @@ func unzip(f string) {
 		// BAD: This could overwrite any file on the file system
 		ioutil.WriteFile(p, []byte("present"), 0666)
 	}
+}
+func handler(db *sql.DB, req *http.Request) {
+	q := fmt.Sprintf("SELECT ITEM,PRICE FROM PRODUCT WHERE ITEM_CATEGORY='%s' ORDER BY PRICE",
+		req.URL.Query()["category"])
+	db.Query(q)
+}
+var charset = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+func generatePassword() string {
+	s := make([]rune, 20)
+	for i := range s {
+		s[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(s)
+}
+func serve() {
+	http.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		username := r.Form.Get("username")
+		if !isValidUsername(username) {
+			// BAD: a request parameter is incorporated without validation into the response
+			fmt.Fprintf(w, "%q is an unknown user", username)
+		} else {
+			// TODO: Handle successful login
+		}
+	})
+	http.ListenAndServe(":80", nil)
+}
+func handler(req *http.Request) {
+	imageName := req.URL.Query()["imageName"][0]
+	outputPath := "/tmp/output.svg"
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("imagetool %s > %s", imageName, outputPath))
+	cmd.Run()
+	// ...
 }
