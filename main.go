@@ -154,7 +154,7 @@ func main() {
 		_, _ = io.Copy(os.Stdout, gzr)
 	})
 	//added now
-	pvk, err := rsa.GenerateKey(rand.Reader, 1024)
+	pvk, err := rsa.GenerateKey(rand.Reader, 1024) //testtt
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -173,6 +173,7 @@ func unzip(f string) {
 func handler(db *sql.DB, req *http.Request) {
 	q := fmt.Sprintf("SELECT ITEM,PRICE FROM PRODUCT WHERE ITEM_CATEGORY='%s' ORDER BY PRICE",
 		req.URL.Query()["category"])
+	
 	db.Query(q)
 }
 var charset = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
